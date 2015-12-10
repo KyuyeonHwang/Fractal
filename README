@@ -66,7 +66,7 @@
 
 3. Install libfractal (global)
 
-  - Install libfractal in global zone (e.g. /usr/local/lib, /usr/local/include/)
+  - Install libfractal in the global zone (e.g. /usr/local/lib/, /usr/local/include/)
 
   $ cd libfractal
   $ mkdir build
@@ -82,7 +82,7 @@
   - Include Fractal header in your C++ source code:
     #include <fractal/fractal.h>
 
-  - Currently, you need to specify where CUDA include directory is:
+  - Currently, you need to specify where the CUDA include directory is:
     $ g++ -o foo.o -c foo.cpp -I/usr/local/cuda/include
 
   - Link with -lfractal:

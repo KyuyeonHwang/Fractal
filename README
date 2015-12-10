@@ -1,0 +1,90 @@
+===========================================================================
+         Fractal: Flexible Recurrent ArChitecture TrAining Library
+===========================================================================
+
+
+   Copyright 2015 Kyuyeon Hwang (kyuyeon.hwang@gmail.com)
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+
+
+1. Prerequisites
+
+  - g++ 4.7 or higher
+  - CUDA Toolkit 7.0 or higher
+  - NVIDIA GPU with Fermi architecture or higher
+
+
+
+2. Quick start guide
+
+  2.1. Install libfractal (local)
+
+    - Generate libfractal library files in build/lib/
+    - Generate libfractal header files in build/include/fractal/
+
+    $ ./build-local.sh
+
+
+  2.2. Compile and run "movingAverage" example
+
+    - Compute the moving average of recent 10 binary input values
+
+    $ cd example/movingAverage/src
+    $ make
+    $ cd ../run
+    $ ./run.sh
+
+
+  2.3. Compile and run "languageModel" example
+
+    - Learn plain text for character-level language modeling
+    - Compute P(x_{t+1} | x_{1:t})
+    - Can be run as a generative model
+
+    $ cd example/languageModel/src
+    $ make
+    $ cd ../run
+    $ ./train_wiki.sh
+
+    After or during the training, we can test the generative model by
+
+    $ ./textGen.sh
+
+
+
+3. Install libfractal (global)
+
+  - Install libfractal in global zone (e.g. /usr/local/lib, /usr/local/include/)
+
+  $ cd libfractal
+  $ mkdir build
+  $ cd build
+  $ ../configure
+  $ make
+  $ sudo make install
+
+
+
+4. How to use the library
+
+  - Include Fractal header in your C++ source code:
+    #include <fractal/fractal.h>
+
+  - Currently, you need to specify where CUDA include directory is:
+    $ g++ -o foo.o -c foo.cpp -I/usr/local/cuda/include
+
+  - Link with -lfractal:
+    $ g++ -o foo foo.o -lfractal
+

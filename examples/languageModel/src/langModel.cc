@@ -130,21 +130,15 @@ int main(int argc, char *argv[])
     rnn.AddLayer("INPUT", ACT_LINEAR, AGG_DONTCARE, inputDim);
     rnn.AddLayer("OUTPUT", ACT_SOFTMAX, AGG_SUM, outputDim);
 
-    basicLayers::AddLstmLayer(rnn, "LSTM[0]", "BIAS", 1, N, initWeightParam);
-    basicLayers::AddLstmLayer(rnn, "LSTM[1]", "BIAS", 1, N, initWeightParam);
+    basicLayers::AddFastLstmLayer(rnn, "LSTM[0]", "BIAS", 1, N, true, initWeightParam);
+    basicLayers::AddFastLstmLayer(rnn, "LSTM[1]", "BIAS", 1, N, true, initWeightParam);
 
-    rnn.AddConnection("INPUT", "LSTM[0].INPUT", 0, false, initWeightParam);
-    rnn.AddConnection("INPUT", "LSTM[0].INPUT_GATE", 0, false, initWeightParam);
-    rnn.AddConnection("INPUT", "LSTM[0].FORGET_GATE", 0, false, initWeightParam);
-    rnn.AddConnection("INPUT", "LSTM[0].OUTPUT_GATE", 0, false, initWeightParam);
+    rnn.AddConnection("INPUT", "LSTM[0].INPUT", initWeightParam);
 
-    rnn.AddConnection("LSTM[0].OUTPUT", "LSTM[1].INPUT", 0, false, initWeightParam);
-    rnn.AddConnection("LSTM[0].OUTPUT", "LSTM[1].INPUT_GATE", 0, false, initWeightParam);
-    rnn.AddConnection("LSTM[0].OUTPUT", "LSTM[1].FORGET_GATE", 0, false, initWeightParam);
-    rnn.AddConnection("LSTM[0].OUTPUT", "LSTM[1].OUTPUT_GATE", 0, false, initWeightParam);
+    rnn.AddConnection("LSTM[0].OUTPUT", "LSTM[1].INPUT", initWeightParam);
 
-    rnn.AddConnection("LSTM[1].OUTPUT", "OUTPUT", 0, false, initWeightParam);
-    rnn.AddConnection("BIAS", "OUTPUT", 0, false, initWeightParam);
+    rnn.AddConnection("LSTM[1].OUTPUT", "OUTPUT", initWeightParam);
+    rnn.AddConnection("BIAS", "OUTPUT", initWeightParam);
 
 
 

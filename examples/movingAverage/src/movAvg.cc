@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     rnn.AddConnection("BIAS", "OUTPUT");
 #endif
 
-#if 1
+#if 0
     /* Fast LSTM network */
     long hiddenSize = 256;
 
@@ -122,6 +122,39 @@ int main(int argc, char *argv[])
     rnn.AddConnection("BIAS", "OUTPUT");
 #endif
 
+#if 0
+    /* GRU network */
+    long hiddenSize = 256;
+
+    rnn.AddLayer("BIAS", ACT_BIAS, AGG_DONTCARE, 1);
+    rnn.AddLayer("INPUT", ACT_LINEAR, AGG_DONTCARE, inputDim);
+    rnn.AddLayer("OUTPUT", ACT_LINEAR, AGG_SUM, outputDim);
+
+    basicLayers::AddGruLayer(rnn, "GRU[0]", "BIAS", 1, hiddenSize, true);
+
+    rnn.AddConnection("INPUT", "GRU[0].INPUT");
+    rnn.AddConnection("INPUT", "GRU[0].RESET_GATE");
+    rnn.AddConnection("INPUT", "GRU[0].UPDATE_GATE");
+
+    rnn.AddConnection("INPUT", "GRU[0].INPUT");
+    rnn.AddConnection("GRU[0].OUTPUT", "OUTPUT");
+    rnn.AddConnection("BIAS", "OUTPUT");
+#endif
+
+#if 1
+    /* Fast GRU network */
+    long hiddenSize = 256;
+
+    rnn.AddLayer("BIAS", ACT_BIAS, AGG_DONTCARE, 1);
+    rnn.AddLayer("INPUT", ACT_LINEAR, AGG_DONTCARE, inputDim);
+    rnn.AddLayer("OUTPUT", ACT_LINEAR, AGG_SUM, outputDim);
+
+    basicLayers::AddFastGruLayer(rnn, "GRU[0]", "BIAS", 1, hiddenSize, true);
+
+    rnn.AddConnection("INPUT", "GRU[0].INPUT");
+    rnn.AddConnection("GRU[0].OUTPUT", "OUTPUT");
+    rnn.AddConnection("BIAS", "OUTPUT");
+#endif
 
     /* Initialize weights */
     rnn.InitWeights(1e-2);
@@ -150,7 +183,7 @@ int main(int argc, char *argv[])
 
     optimizer.SetWorkspacePath(workspacePath);
     optimizer.SetInitLearningRate(1e-4);
-    optimizer.SetMinLearningRate(1e-6);
+    optimizer.SetMinLearningRate(1e-7);
     optimizer.SetMaxRetryCount(2);
     optimizer.SetMomentum(0.9);
     optimizer.SetLearningRateDecayRate(0.1);

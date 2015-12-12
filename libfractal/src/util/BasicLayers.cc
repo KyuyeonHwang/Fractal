@@ -269,6 +269,99 @@ namespace basicLayers
         rnn.AddConnection(prefix + "SELECT_I", name, CONN_IDENTITY);
         rnn.AddConnection(prefix + "SELECT_O", name, CONN_IDENTITY);
     }
+
+
+    void AddGruLayer(Rnn &rnn, const std::string &name, const std::string &biasLayer, const unsigned long delayAmount,
+            const unsigned long size, const bool selfLoop, const InitWeightParam &initWeightParam)
+    {
+        const std::string prefix = name + ".";
+
+        rnn.AddLayer(prefix + "INPUT", ACT_TANH, AGG_SUM, size);
+        rnn.AddLayer(prefix + "OUTPUT", ACT_LINEAR, AGG_SUM, size);
+        rnn.AddLayer(prefix + "OUTPUT.DELAYED", ACT_LINEAR, AGG_MULT, size);
+        rnn.AddLayer(prefix + "RESET_GATE", ACT_SIGMOID, AGG_SUM, size);
+        rnn.AddLayer(prefix + "RESET_GATE_MULT", ACT_LINEAR, AGG_MULT, size);
+        rnn.AddLayer(prefix + "UPDATE_GATE", ACT_SIGMOID, AGG_SUM, size);
+        rnn.AddLayer(prefix + "UPDATE_GATE_MULT", ACT_LINEAR, AGG_MULT, size);
+        rnn.AddLayer(prefix + "UPDATE_GATE_INV", ACT_ONE_MINUS_LINEAR, AGG_SUM, size);
+        rnn.AddLayer(prefix + "UPDATE_GATE_INV_MULT", ACT_LINEAR, AGG_MULT, size);
+
+        rnn.AddConnection(prefix + "OUTPUT", prefix + "OUTPUT.DELAYED", {CONN_IDENTITY, delayAmount});
+        rnn.AddConnection(prefix + "UPDATE_GATE", prefix + "UPDATE_GATE_INV", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "OUTPUT.DELAYED", prefix + "RESET_GATE_MULT", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "RESET_GATE", prefix + "RESET_GATE_MULT", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "RESET_GATE_MULT", prefix + "INPUT", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "INPUT", prefix + "UPDATE_GATE_INV_MULT", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "UPDATE_GATE_INV", prefix + "UPDATE_GATE_INV_MULT", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "OUTPUT.DELAYED", prefix + "UPDATE_GATE_MULT", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "UPDATE_GATE", prefix + "UPDATE_GATE_MULT", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "UPDATE_GATE_MULT", prefix + "OUTPUT", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "UPDATE_GATE_INV_MULT", prefix + "OUTPUT", CONN_IDENTITY);
+
+        /* Biases */
+        rnn.AddConnection(biasLayer, prefix + "INPUT", initWeightParam);
+        rnn.AddConnection(biasLayer, prefix + "RESET_GATE", initWeightParam);
+        rnn.AddConnection(biasLayer, prefix + "UPDATE_GATE", initWeightParam);
+
+        if(selfLoop == true)
+        {
+            rnn.AddConnection(prefix + "OUTPUT.DELAYED", prefix + "INPUT", initWeightParam);
+            rnn.AddConnection(prefix + "OUTPUT.DELAYED", prefix + "RESET_GATE", initWeightParam);
+            rnn.AddConnection(prefix + "OUTPUT.DELAYED", prefix + "UPDATE_GATE", initWeightParam);
+        }
+    }
+
+
+    void AddFastGruLayer(Rnn &rnn, const std::string &name, const std::string &biasLayer, const unsigned long delayAmount,
+            const unsigned long size, const bool selfLoop, const InitWeightParam &initWeightParam)
+    {
+        const std::string prefix = name + ".";
+
+        rnn.AddLayer(prefix + "INPUT", ACT_LINEAR, AGG_SUM, 3 * size);
+        rnn.AddLayer(prefix + "INPUT_SQUASH", ACT_TANH, AGG_SUM, size);
+        rnn.AddLayer(prefix + "OUTPUT", ACT_LINEAR, AGG_SUM, size);
+        rnn.AddLayer(prefix + "OUTPUT.DELAYED", ACT_LINEAR, AGG_MULT, size);
+        rnn.AddLayer(prefix + "RESET_GATE", ACT_SIGMOID, AGG_SUM, size);
+        rnn.AddLayer(prefix + "RESET_GATE_MULT", ACT_LINEAR, AGG_MULT, size);
+        rnn.AddLayer(prefix + "UPDATE_GATE", ACT_SIGMOID, AGG_SUM, size);
+        rnn.AddLayer(prefix + "UPDATE_GATE_MULT", ACT_LINEAR, AGG_MULT, size);
+        rnn.AddLayer(prefix + "UPDATE_GATE_INV", ACT_ONE_MINUS_LINEAR, AGG_SUM, size);
+        rnn.AddLayer(prefix + "UPDATE_GATE_INV_MULT", ACT_LINEAR, AGG_MULT, size);
+
+        ConnParam connParam(CONN_IDENTITY);
+
+        connParam.srcRangeFrom = 0;
+        connParam.srcRangeTo = size - 1;
+        rnn.AddConnection(prefix + "INPUT", prefix + "INPUT_SQUASH", connParam);
+
+        connParam.srcRangeFrom += size;
+        connParam.srcRangeTo += size;
+        rnn.AddConnection(prefix + "INPUT", prefix + "RESET_GATE", connParam);
+
+        connParam.srcRangeFrom += size;
+        connParam.srcRangeTo += size;
+        rnn.AddConnection(prefix + "INPUT", prefix + "UPDATE_GATE", connParam);
+
+        rnn.AddConnection(prefix + "OUTPUT", prefix + "OUTPUT.DELAYED", {CONN_IDENTITY, delayAmount});
+        rnn.AddConnection(prefix + "UPDATE_GATE", prefix + "UPDATE_GATE_INV", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "OUTPUT.DELAYED", prefix + "RESET_GATE_MULT", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "RESET_GATE", prefix + "RESET_GATE_MULT", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "RESET_GATE_MULT", prefix + "INPUT_SQUASH", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "INPUT_SQUASH", prefix + "UPDATE_GATE_INV_MULT", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "UPDATE_GATE_INV", prefix + "UPDATE_GATE_INV_MULT", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "OUTPUT.DELAYED", prefix + "UPDATE_GATE_MULT", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "UPDATE_GATE", prefix + "UPDATE_GATE_MULT", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "UPDATE_GATE_MULT", prefix + "OUTPUT", CONN_IDENTITY);
+        rnn.AddConnection(prefix + "UPDATE_GATE_INV_MULT", prefix + "OUTPUT", CONN_IDENTITY);
+
+        /* Bias */
+        rnn.AddConnection(biasLayer, prefix + "INPUT", initWeightParam);
+
+        if(selfLoop == true)
+        {
+            rnn.AddConnection(prefix + "OUTPUT.DELAYED", prefix + "INPUT", initWeightParam);
+        }
+    }
 }
 
 }

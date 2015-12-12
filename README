@@ -23,6 +23,7 @@
 
   - g++ 4.7 or higher
   - CUDA Toolkit 7.0 or higher
+  - GNU Autotools (only if you need to re-configure libfractal)
   - NVIDIA GPU with Fermi architecture or higher
 
 
@@ -35,6 +36,11 @@
     - Generate libfractal header files in build/include/fractal/
 
     $ ./build-local.sh
+
+    TROUBLESHOOTING: aclocal version mismatch
+      (Required: GNU Autotools)
+      $ cd libractal
+      $ ./autoreconf
 
 
   2.2. Compile and run "movingAverage" example
@@ -79,7 +85,7 @@
 
 4. How to use the library
 
-  - Include Fractal header in your C++ source code:
+  - Include the Fractal header file in your C++ source code:
     #include <fractal/fractal.h>
 
   - Currently, you need to specify where the CUDA include directory is:

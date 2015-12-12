@@ -39,7 +39,7 @@
 
     TROUBLESHOOTING: aclocal version mismatch
       (Required: GNU Autotools)
-      $ cd libractal
+      $ cd libfractal
       $ ./autoreconf
 
 

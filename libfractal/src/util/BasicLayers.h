@@ -37,11 +37,9 @@ namespace basicLayers
     void AddClockedLayer(Rnn &rnn, const std::string &name, const ActType actType, const AggType aggType,
             const unsigned long delayAmount, const unsigned long size);
 
-    void AddGruLayer(Rnn &rnn, const std::string &name, const std::string &biasLayer, const unsigned long delayAmount, const unsigned long size, const bool selfLoop, const InitWeightParam &initWeightParam = InitWeightParam());
+    void AddGruLayer(Rnn &rnn, const std::string &name, const std::string &biasLayer, const unsigned long delayAmount, const unsigned long size, const InitWeightParam &initWeightParam = InitWeightParam());
 
-    void AddGruLstmLayer(Rnn &rnn, const std::string &name, const std::string &biasLayer, const unsigned long delayAmount, const unsigned long size, const bool selfLoop, const InitWeightParam &initWeightParam = InitWeightParam());
-
-    void AddFastGruLayer(Rnn &rnn, const std::string &name, const std::string &biasLayer, const unsigned long delayAmount, const unsigned long size, const bool selfLoop, const InitWeightParam &initWeightParam = InitWeightParam());
+    void AddFastGruLayer(Rnn &rnn, const std::string &name, const std::string &biasLayer, const unsigned long delayAmount, const unsigned long size, const InitWeightParam &initWeightParam = InitWeightParam());
 }
 
 }

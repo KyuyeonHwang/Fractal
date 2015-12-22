@@ -130,13 +130,12 @@ int main(int argc, char *argv[])
     rnn.AddLayer("INPUT", ACT_LINEAR, AGG_DONTCARE, inputDim);
     rnn.AddLayer("OUTPUT", ACT_LINEAR, AGG_SUM, outputDim);
 
-    basicLayers::AddGruLayer(rnn, "GRU[0]", "BIAS", 1, hiddenSize, true);
+    basicLayers::AddGruLayer(rnn, "GRU[0]", "BIAS", 1, hiddenSize);
 
     rnn.AddConnection("INPUT", "GRU[0].INPUT");
     rnn.AddConnection("INPUT", "GRU[0].RESET_GATE");
     rnn.AddConnection("INPUT", "GRU[0].UPDATE_GATE");
 
-    rnn.AddConnection("INPUT", "GRU[0].INPUT");
     rnn.AddConnection("GRU[0].OUTPUT", "OUTPUT");
     rnn.AddConnection("BIAS", "OUTPUT");
 #endif
@@ -149,10 +148,15 @@ int main(int argc, char *argv[])
     rnn.AddLayer("INPUT", ACT_LINEAR, AGG_DONTCARE, inputDim);
     rnn.AddLayer("OUTPUT", ACT_LINEAR, AGG_SUM, outputDim);
 
-    basicLayers::AddFastGruLayer(rnn, "GRU[0]", "BIAS", 1, hiddenSize, true);
+    basicLayers::AddFastGruLayer(rnn, "GRU[0]", "BIAS", 1, hiddenSize);
+    rnn.AddLayer("FC", ACT_RECTLINEAR, AGG_SUM, hiddenSize);
 
     rnn.AddConnection("INPUT", "GRU[0].INPUT");
-    rnn.AddConnection("GRU[0].OUTPUT", "OUTPUT");
+
+    rnn.AddConnection("GRU[0].OUTPUT", "FC");
+    rnn.AddConnection("BIAS", "FC");
+
+    rnn.AddConnection("FC", "OUTPUT");
     rnn.AddConnection("BIAS", "OUTPUT");
 #endif
 
@@ -228,7 +232,7 @@ int main(int argc, char *argv[])
     rnn.InitForward(0, nUnroll * nStream - 1);
 
 
-    for(unsigned long j = 0; j < 3; j++)
+    for(unsigned long j = 0; j < 4; j++)
     {
         /* Generate sequences from the dev stream */
         for(unsigned long i = 0; i < nUnroll; i++)

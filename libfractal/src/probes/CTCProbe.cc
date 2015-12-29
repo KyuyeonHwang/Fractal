@@ -34,12 +34,51 @@ static const INT STATE_COVERAGE_BEGIN = 0x20;
 static const INT STATE_COVERAGE_END = 0x40;
 
 
+static const FLOAT LogSumExpN(const FLOAT *x, unsigned long n)
+{
+    verify(n >= 1);
+
+    if(n == 1) return x[0];
+
+    FLOAT _max = std::max(x[0], x[1]);
+    FLOAT sum = (FLOAT) 0;
+
+    for(unsigned long i = 2; i < n; i++)
+    {
+        _max = std::max(_max, x[i]);
+    }
+
+    if(isinf(_max) || isinff(_max)) return _max;
+
+    for(unsigned long i = 0; i < n; i++)
+    {
+        sum += exp(x[i] - _max);
+    }
+
+    return log(sum) + _max;
+}
+
+
+inline static const FLOAT LogSumExp2(const FLOAT x, const FLOAT y)
+{
+    FLOAT _max = std::max(x, y);
+    return (isinf(_max) || isinff(_max)) ? _max : log(exp(x - _max) + exp(y - _max)) + _max;
+}
+
+
+inline static const FLOAT LogSumExp3(const FLOAT x, const FLOAT y, const FLOAT z)
+{
+    FLOAT _max = std::max(std::max(x, y), z);
+    return (isinf(_max) || isinff(_max)) ? _max : log(exp(x - _max) + exp(y - _max) + exp(z - _max)) + _max;
+}
+
+
 CTCProbe::CTCProbe() : TrainableProbe(true)
 {
     maxTargetLen = 4096;
 
     forceBlankFirst = true;
-    residualTraining = false;
+    onlineTraining = false;
 
     ResetStatistics();
 }
@@ -296,7 +335,7 @@ void CTCProbe::ComputeErr(const unsigned long idxFrom, const unsigned long idxTo
     }
 
 
-    /* Backward */
+    /* Backward (CTC-TR) */
     #ifdef FRACTAL_USE_OMP
     #pragma omp parallel for
     #endif
@@ -400,32 +439,34 @@ void CTCProbe::ComputeErr(const unsigned long idxFrom, const unsigned long idxTo
                     logLikelihood = LogSumExp2(ptrCurForward[2 * curTargetCount], ptrCurForward[2 * curTargetCount - 1]);
                 }
 
-                for(long i = 0; i < 2 * curTargetCount + 1; i++)
+                if(!isinf(logLikelihood) && !isinff(logLikelihood))
                 {
-                    INT actIdx = (i % 2 == 0) ? layerSize - 1 : ptrTargetBuf[((curTargetStartIdx + i / 2) % maxTargetLen) * nStream + streamIdx];
+                    for(long i = 0; i < 2 * curTargetCount + 1; i++)
+                    {
+                        INT actIdx = (i % 2 == 0) ? layerSize - 1 : ptrTargetBuf[((curTargetStartIdx + i / 2) % maxTargetLen) * nStream + streamIdx];
 
-                    ptrCurErr[actIdx] += exp(ptrCurForward[i] + ptrCurBackward[i] - logLikelihood);
+                        ptrCurErr[actIdx] += exp(ptrCurForward[i] + ptrCurBackward[i] - logLikelihood);
+                    }
+
+                    FLOAT errSum = (FLOAT) 0;
+
+                    for(unsigned long i = 0; i < layerSize; i++)
+                    {
+                        errSum += ptrCurErr[i];
+                    }
+
+                    for(unsigned long i = 0; i < layerSize; i++)
+                    {
+                        ptrCurErr[i] = ptrCurErr[i] / errSum - ptrCurAct[i];
+                    }
                 }
-
-                FLOAT errSum = (FLOAT) 0;
-
-                for(unsigned long i = 0; i < layerSize; i++)
-                {
-                    errSum += ptrCurErr[i];
-                }
-
-                for(unsigned long i = 0; i < layerSize; i++)
-                {
-                    ptrCurErr[i] = ptrCurErr[i] / errSum - ptrCurAct[i];
-                }
-
             }
         }
     }
 
    
-    /* Backward - residual */
-    if(residualTraining == true)
+    /* Backward (CTC-EM) */
+    if(onlineTraining == true)
     {
         #ifdef FRACTAL_USE_OMP
         #pragma omp parallel for
@@ -554,23 +595,26 @@ void CTCProbe::ComputeErr(const unsigned long idxFrom, const unsigned long idxTo
                     ptrCurErr[i] = (FLOAT) 0;
                 }
 
-                for(long i = 0; i < 2 * curTargetCount + 1; i++)
+                if(!isinf(logLikelihood) && !isinff(logLikelihood))
                 {
-                    INT actIdx = (i % 2 == 0) ? layerSize - 1 : ptrTargetBuf[((curTargetStartIdx + i / 2) % maxTargetLen) * nStream + streamIdx];
+                    for(long i = 0; i < 2 * curTargetCount + 1; i++)
+                    {
+                        INT actIdx = (i % 2 == 0) ? layerSize - 1 : ptrTargetBuf[((curTargetStartIdx + i / 2) % maxTargetLen) * nStream + streamIdx];
 
-                    ptrCurErr[actIdx] += exp(ptrCurForward[i] + ptrCurBackward[i] - logLikelihood);
-                }
+                        ptrCurErr[actIdx] += exp(ptrCurForward[i] + ptrCurBackward[i] - logLikelihood);
+                    }
 
-                FLOAT errSum = (FLOAT) 0;
+                    FLOAT errSum = (FLOAT) 0;
 
-                for(unsigned long i = 0; i < layerSize; i++)
-                {
-                    errSum += ptrCurErr[i];
-                }
+                    for(unsigned long i = 0; i < layerSize; i++)
+                    {
+                        errSum += ptrCurErr[i];
+                    }
 
-                for(unsigned long i = 0; i < layerSize; i++)
-                {
-                    ptrCurErr[i] = ptrCurErr[i] / errSum - ptrCurAct[i];
+                    for(unsigned long i = 0; i < layerSize; i++)
+                    {
+                        ptrCurErr[i] = ptrCurErr[i] / errSum - ptrCurAct[i];
+                    }
                 }
             }
         }
@@ -987,9 +1031,9 @@ void CTCProbe::SetForceBlankFirst(const bool val)
 }
 
 
-void CTCProbe::SetResidualTraining(const bool val)
+void CTCProbe::SetOnlineTraining(const bool val)
 {
-    residualTraining = val;
+    onlineTraining = val;
 }
 
 
@@ -1140,31 +1184,6 @@ void CTCProbe::Dequeue(const unsigned long idxFrom, const unsigned long idxTo)
     }
 
     targetTail.HostPush();
-}
-
-
-const FLOAT CTCProbe::LogSumExpN(const FLOAT *x, unsigned long n)
-{
-    verify(n >= 1);
-
-    if(n == 1) return x[0];
-
-    FLOAT _max = std::max(x[0], x[1]);
-    FLOAT sum = (FLOAT) 0;
-
-    for(unsigned long i = 2; i < n; i++)
-    {
-        _max = std::max(_max, x[i]);
-    }
-
-    if(isinf(_max)) return _max;
-
-    for(unsigned long i = 0; i < n; i++)
-    {
-        sum += exp(x[i] - _max);
-    }
-
-    return log(sum) + _max;
 }
 
 

@@ -1161,7 +1161,6 @@ void Engine::GenerateDropoutMask(Matrix<FLOAT> &dropoutMask, const FLOAT dropout
 }
 
 
-
 void Engine::Adadelta(Matrix<FLOAT> &deltas, Matrix<FLOAT> &derivs, Matrix<FLOAT> &msDeriv, Matrix<FLOAT> &msDelta, const FLOAT learningRate, const FLOAT decayRate, PStream &stream)
 {
     verify(deltas.GetEngine() == this);

@@ -57,7 +57,7 @@ public:
     void PrintStatistics(std::ostream &outStream);
 
     void SetForceBlankFirst(const bool val);
-    void SetResidualTraining(const bool val);
+    void SetOnlineTraining(const bool val);
 
 protected:
     typedef struct _EditDistance
@@ -74,19 +74,6 @@ protected:
     
     void Dequeue(const unsigned long idxFrom, const unsigned long idxTo);
 
-    const FLOAT LogSumExpN(const FLOAT *x, unsigned long n);
-
-    inline const FLOAT LogSumExp2(const FLOAT x, const FLOAT y)
-    {
-        FLOAT _max = std::max(x, y);
-        return isinf(_max) ? _max : log(exp(x - _max) + exp(y - _max)) + _max;
-    }
-
-    inline const FLOAT LogSumExp3(const FLOAT x, const FLOAT y, const FLOAT z)
-    {
-        FLOAT _max = std::max(std::max(x, y), z);
-        return isinf(_max) ? _max : log(exp(x - _max) + exp(y - _max) + exp(z - _max)) + _max;
-    }
 
     EditDistance ComputeEditDistance(const unsigned long streamIdx);
     EditDistance ComputeWordEditDistance(const unsigned long streamIdx);
@@ -125,7 +112,7 @@ protected:
     double lossSum;
 
     bool forceBlankFirst;
-    bool residualTraining;
+    bool onlineTraining;
 
     std::vector<INT> labelGroup;
     std::vector<bool> wordDelimiter;

@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 {
     Rnn rnn;
     Engine engine;
-    InitWeightParam initWeightParam;
+    InitWeightParamUniform initWeightParam;
     unsigned long long randomSeed;
     bool train = false;
 
@@ -68,8 +68,9 @@ int main(int argc, char *argv[])
 
     std::string workspacePath = argv[3];
 
-    initWeightParam.stdev = 1e-2;
     initWeightParam.isValid = true;
+    initWeightParam.a = -1e-2;
+    initWeightParam.b = 1e-2;
 
     randomSeed = 0;
     std::cout << "Random seed: " << randomSeed << std::endl;

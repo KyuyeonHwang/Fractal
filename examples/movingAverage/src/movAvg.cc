@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     rnn.AddConnection("BIAS", "OUTPUT");
 #endif
 
-#if 0
+#if 1
     /* Fast LSTM network */
     long hiddenSize = 256;
 
@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
     rnn.AddConnection("BIAS", "OUTPUT");
 #endif
 
-#if 1
+#if 0
     /* Fast GRU network */
     long hiddenSize = 256;
 
@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
 #endif
 
     /* Initialize weights */
-    rnn.InitWeights(1e-2);
+    rnn.InitWeights(InitWeightParamUniform(1e-2));
 
 
     /* Set ports */

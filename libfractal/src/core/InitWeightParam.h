@@ -23,19 +23,47 @@
 namespace fractal
 {
 
+
 class InitWeightParam
 {
 public:
-    InitWeightParam() : isValid(false), mean((FLOAT) 0), stdev((FLOAT) 0), addToDiag((FLOAT) 0) {}
-    InitWeightParam(FLOAT stdev) : isValid(true), mean((FLOAT) 0), stdev(stdev), addToDiag((FLOAT) 0) {}
-    InitWeightParam(FLOAT mean, FLOAT stdev) : isValid(true), mean(mean), stdev(stdev), addToDiag((FLOAT) 0) {}
+    InitWeightParam() : isValid(false), addToDiag((FLOAT) 0) {}
+    virtual ~InitWeightParam() {}
 
     const bool IsValid() const { return isValid; }
 
+    virtual InitWeightParam *Clone() const { return new InitWeightParam(*this); }
+
     bool isValid;
+    FLOAT addToDiag;
+};
+
+
+class InitWeightParamGaussian : public InitWeightParam
+{
+public:
+    InitWeightParamGaussian() : InitWeightParam(), mean((FLOAT) 0), stdev((FLOAT) 0) {}
+    InitWeightParamGaussian(FLOAT stdev) : InitWeightParam(), mean((FLOAT) 0), stdev(stdev) { isValid = true; }
+    InitWeightParamGaussian(FLOAT mean, FLOAT stdev) : InitWeightParam(), mean(mean), stdev(stdev) { isValid = true; }
+
+    virtual InitWeightParamGaussian *Clone() const { return new InitWeightParamGaussian(*this); }
+
     FLOAT mean;
     FLOAT stdev;
-    FLOAT addToDiag;
+};
+
+
+class InitWeightParamUniform : public InitWeightParam
+{
+public:
+    InitWeightParamUniform() : InitWeightParam(), a((FLOAT) 0), b((FLOAT) 0) {}
+    InitWeightParamUniform(FLOAT b) : InitWeightParam(), a(-b), b(b) { isValid = true; }
+    InitWeightParamUniform(FLOAT a, FLOAT b) : InitWeightParam(), a(a), b(b) { isValid = true; }
+
+    virtual InitWeightParamUniform *Clone() const { return new InitWeightParamUniform(*this); }
+
+    FLOAT a;
+    FLOAT b;
 };
 
 }

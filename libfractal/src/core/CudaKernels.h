@@ -31,11 +31,19 @@ namespace cudaKernels
     void MatSet(T *_x, const unsigned long ldx, const T val,
             const unsigned long nRows, const unsigned long nCols, const cudaStream_t stream);
 
-    /* _z = _x * _y */
+    /* _z = _x .* _y */
     template<class T>
     void MatElemMult(const T *_x, const unsigned long ldx,
             const T *_y, const unsigned long ldy,
             T *_z, const unsigned long ldz,
+            const unsigned long nRows, const unsigned long nCols,
+            const cudaStream_t stream);
+
+    /* _y = a * _x + b */
+    template<class T>
+    void MatScale(const T *_x, const unsigned long ldx,
+            T *_y, const unsigned long ldy,
+            const T a, const T b,
             const unsigned long nRows, const unsigned long nCols,
             const cudaStream_t stream);
 

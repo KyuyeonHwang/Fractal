@@ -702,6 +702,35 @@ void Engine::MatRandN(Matrix<FLOAT> &mat, const FLOAT mean, const FLOAT stdev, P
 }
 
 
+void Engine::MatRandU(Matrix<FLOAT> &mat, const FLOAT a, const FLOAT b, PStream &stream)
+{
+    verify(mat.GetEngine() == this);
+    verify(b >= a);
+    verify(mat.GetMem()->GetSize() == sizeof(FLOAT) * mat.GetNumCols() * mat.GetNumRows());
+
+    verify(mat.GetNumRows() == mat.GetLeadingDim());
+
+    FLOAT *ptr;
+
+    ptr = mat.GetPtrForWrite(stream);
+
+#ifdef FRACTAL_USE_CUDA
+    unsigned long n;
+    n = mat.GetNumRows() * mat.GetNumCols();
+
+    SetComputeLoc(stream.loc);
+    verify(curandSetStream(curandGen[GetComputeLocIdx(stream.loc)], stream.cudaStream) == CURAND_STATUS_SUCCESS);
+    verify(RANDU(curandGen[GetComputeLocIdx(stream.loc)], ptr, n) == CURAND_STATUS_SUCCESS);
+    cudaKernels::MatScale<FLOAT>(ptr, mat.GetLeadingDim(), ptr, mat.GetLeadingDim(),
+            b - a, a, mat.GetNumRows(), mat.GetNumCols(), stream.cudaStream);
+#else
+    verify(false); /* CPU computation is not supported */
+#endif /* FRACTAL_USE_CUDA */
+
+    mat.FinishWrite(stream);
+}
+
+
 void Engine::MatCopy(Matrix<FLOAT> &A, Matrix<FLOAT> &B, PStream &stream)
 {
     verify(A.GetEngine() == this);

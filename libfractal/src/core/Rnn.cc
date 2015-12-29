@@ -1385,7 +1385,7 @@ void Rnn::AddConnection(Layer *const from, Layer *const to, const ConnParam &par
     conn->SetBatchSize(nStream, nUnroll);
     conn->SetEngine(engine);
     conn->SetPStream(defaultPStream);
-    conn->InitWeights(param.initWeightParam);
+    conn->InitWeights(param.GetInitWeightParam());
 
     from->AddDstConnection(conn);
     to->AddSrcConnection(conn);

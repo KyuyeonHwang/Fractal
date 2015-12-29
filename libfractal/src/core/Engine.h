@@ -123,6 +123,7 @@ public:
     void MatSet(Matrix<INT> &mat, const INT val, PStream &stream);
 
     void MatRandN(Matrix<FLOAT> &mat, const FLOAT mean, const FLOAT stdev, PStream &stream);
+    void MatRandU(Matrix<FLOAT> &mat, const FLOAT a, const FLOAT b, PStream &stream);
 
     /* B = A */
     void MatCopy(Matrix<FLOAT> &A, Matrix<FLOAT> &B, PStream &stream);

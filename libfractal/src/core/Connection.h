@@ -47,7 +47,7 @@ public:
         srcRangeTo((long) -1),
         dstRangeFrom((long) -1),
         dstRangeTo((long) -1),
-        initWeightParam(initWeightParam) {}
+        initWeightParam(initWeightParam.Clone()) {}
 
     ConnParam(const unsigned long delayAmount,
             const InitWeightParam &initWeightParam = InitWeightParam())
@@ -57,7 +57,7 @@ public:
         srcRangeTo((long) -1),
         dstRangeFrom((long) -1),
         dstRangeTo((long) -1),
-        initWeightParam(initWeightParam) {}
+        initWeightParam(initWeightParam.Clone()) {}
 
     ConnParam(const InitWeightParam &initWeightParam)
         : connType(CONN_FULL),
@@ -66,7 +66,7 @@ public:
         srcRangeTo((long) -1),
         dstRangeFrom((long) -1),
         dstRangeTo((long) -1),
-        initWeightParam(initWeightParam) {}
+        initWeightParam(initWeightParam.Clone()) {}
 
     ConnParam(const ConnType connType,
             const InitWeightParam &initWeightParam)
@@ -76,7 +76,12 @@ public:
         srcRangeTo((long) -1),
         dstRangeFrom((long) -1),
         dstRangeTo((long) -1),
-        initWeightParam(initWeightParam) {}
+        initWeightParam(initWeightParam.Clone()) {}
+
+    virtual ~ConnParam() { delete initWeightParam; }
+
+    void SetInitWeightParam(const InitWeightParam &newParam) { delete initWeightParam; initWeightParam = newParam.Clone(); }
+    const InitWeightParam &GetInitWeightParam() const { return *initWeightParam; }
 
     ConnType connType;
 
@@ -86,7 +91,8 @@ public:
     long dstRangeFrom;
     long dstRangeTo;
 
-    InitWeightParam initWeightParam;
+protected:
+    InitWeightParam *initWeightParam;
 };
 
 

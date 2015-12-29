@@ -27,16 +27,9 @@ namespace fractal
 namespace basicLayers
 {
     void AddLstmLayer(Rnn &rnn, const std::string &name, const std::string &biasLayer, const unsigned long delayAmount,
-            const unsigned long size, const bool selfLoop, const InitWeightParam &initWeightParam, const FLOAT initForgetGateBias)
+            const unsigned long size, const bool selfLoop, const InitWeightParam &initWeightParam)
     {
         const std::string prefix = name + ".";
-        InitWeightParam initForgetGateBiasParam = initWeightParam;
-
-        if(initForgetGateBias != (FLOAT) 0)
-        {
-            verify(initForgetGateBiasParam.IsValid() == true);
-            initForgetGateBiasParam.mean = initForgetGateBias;
-        }
 
         rnn.AddLayer(prefix + "INPUT", ACT_TANH, AGG_SUM, size);
         rnn.AddLayer(prefix + "INPUT_GATE_PEEP", ACT_LINEAR, AGG_MULT, size);
@@ -66,7 +59,7 @@ namespace basicLayers
         /* Biases */
         rnn.AddConnection(biasLayer, prefix + "INPUT", initWeightParam);
         rnn.AddConnection(biasLayer, prefix + "INPUT_GATE", initWeightParam);
-        rnn.AddConnection(biasLayer, prefix + "FORGET_GATE", initForgetGateBiasParam);
+        rnn.AddConnection(biasLayer, prefix + "FORGET_GATE", initWeightParam);
         rnn.AddConnection(biasLayer, prefix + "OUTPUT_GATE", initWeightParam);
 
         /* Peephole connections */
@@ -360,7 +353,7 @@ namespace basicLayers
 
             connParam.dstRangeFrom = size;
             connParam.dstRangeTo = 3 * size - 1;
-            connParam.initWeightParam = initWeightParam;
+            connParam.SetInitWeightParam(initWeightParam);
 
             rnn.AddConnection(prefix + "OUTPUT.DELAYED", prefix + "INPUT", connParam);
         }

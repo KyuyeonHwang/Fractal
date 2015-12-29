@@ -28,7 +28,7 @@ namespace fractal
 
 namespace basicLayers
 {
-    void AddLstmLayer(Rnn &rnn, const std::string &name, const std::string &biasLayer, const unsigned long delayAmount, const unsigned long size, const bool selfLoop, const InitWeightParam &initWeightParam = InitWeightParam(), const FLOAT initForgetGateBias = (FLOAT) 0);
+    void AddLstmLayer(Rnn &rnn, const std::string &name, const std::string &biasLayer, const unsigned long delayAmount, const unsigned long size, const bool selfLoop, const InitWeightParam &initWeightParam = InitWeightParam());
 
     void AddFastLstmLayer(Rnn &rnn, const std::string &name, const std::string &biasLayer, const unsigned long delayAmount, const unsigned long size, const bool selfLoop, const InitWeightParam &initWeightParam = InitWeightParam());
 

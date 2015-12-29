@@ -187,9 +187,31 @@ void Connection::InitWeights(const InitWeightParam &initWeightParam)
 
     if(GetNumWeights() > 0)
     {
-        verify(initWeightParam.stdev >= (FLOAT) 0);
+        bool success = false;
 
-        engine->MatRandN(weights, initWeightParam.mean, initWeightParam.stdev, *stream);
+        try
+        {
+            const InitWeightParamGaussian &paramGaussian = dynamic_cast<const InitWeightParamGaussian &>(initWeightParam);
+            verify(paramGaussian.stdev >= (FLOAT) 0);
+            engine->MatRandN(weights, paramGaussian.mean, paramGaussian.stdev, *stream);
+            success = true;
+        }
+        catch(...) {}
+
+        try
+        {
+            const InitWeightParamUniform &paramUniform = dynamic_cast<const InitWeightParamUniform &>(initWeightParam);
+            verify(paramUniform.b >= paramUniform.a);
+            engine->MatRandU(weights, paramUniform.a, paramUniform.b, *stream);
+            success = true;
+        }
+        catch(...) {}
+
+        if(success == false)
+        {
+            /* Unsupported distribution */
+            verify(false);
+        }
 
         if(initWeightParam.addToDiag != (FLOAT) 0)
         {

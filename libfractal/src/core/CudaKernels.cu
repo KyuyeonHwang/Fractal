@@ -45,6 +45,11 @@ static __global__ void MatElemMultKernel(const T *x, const int ldx,
         const int nRows, const int nCols);
 
 template<class T>
+static __global__ void MatScaleKernel(const T *x, const int ldx,
+        T *y, const int ldy, T a, T b,
+        const int nRows, const int nCols);
+
+template<class T>
 static __global__ void MatAddKernel(const T *x, const int ldx,
         const T *y, const int ldy, T *z, const int ldz,
         const int nRows, const int nCols);
@@ -195,6 +200,22 @@ static __global__ void MatElemMultKernel(const T *x, const int ldx,
     if(thdIdx >= nRows * nCols) return;
 
     z[zIdx] = x[xIdx] * y[yIdx];
+}
+
+
+template<class T>
+static __global__ void MatScaleKernel(const T *x, const int ldx,
+        T *y, const int ldy, T a, T b, const int nRows, const int nCols)
+{
+    int thdIdx = blockIdx.x * blockDim.x + threadIdx.x;
+    int col = thdIdx / nRows;
+    int row = thdIdx - col * nRows;
+    int xIdx = col * ldx + row;
+    int yIdx = col * ldy + row;
+
+    if(thdIdx >= nRows * nCols) return;
+
+    y[yIdx] = a * x[xIdx] + b;
 }
 
 
@@ -734,6 +755,20 @@ void MatElemMult(const T *_x, const unsigned long ldx,
 
 
 template<class T>
+void MatScale(const T *_x, const unsigned long ldx,
+            T *_y, const unsigned long ldy,
+            const T a, const T b,
+            const unsigned long nRows, const unsigned long nCols,
+            const cudaStream_t stream)
+{
+    dim3 dimGrid((nRows * nCols + THREAD_PER_BLOCK - 1) / THREAD_PER_BLOCK);
+    dim3 dimBlock(THREAD_PER_BLOCK);
+
+    MatScaleKernel<T><<<dimGrid, dimBlock, 0, stream>>>(_x, ldx, _y, ldy, a, b, nRows, nCols);
+}
+
+
+template<class T>
 void MatAdd(const T *_x, const unsigned long ldx,
         const T *_y, const unsigned long ldy,
         T *_z, const unsigned long ldz,
@@ -990,6 +1025,17 @@ template void MatElemMult<float>(const float *_x, const unsigned long ldx,
 template void MatElemMult<double>(const double *_x, const unsigned long ldx,
         const double *_y, const unsigned long ldy,
         double *_z, const unsigned long ldz,
+        const unsigned long nRows, const unsigned long nCols,
+        const cudaStream_t stream);
+
+template void MatScale(const float *_x, const unsigned long ldx,
+        float *_y, const unsigned long ldy,
+        const float a, const float b,
+        const unsigned long nRows, const unsigned long nCols,
+        const cudaStream_t stream);
+template void MatScale(const double *_x, const unsigned long ldx,
+        double *_y, const unsigned long ldy,
+        const double a, const double b,
         const unsigned long nRows, const unsigned long nCols,
         const cudaStream_t stream);
 

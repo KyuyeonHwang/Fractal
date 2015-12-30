@@ -29,10 +29,12 @@ namespace fractal
 
 class MultiTypeMatrix
 {
-
 public:
 
     enum DataType {DATATYPE_UNDEFINED, DATATYPE_FLOAT, DATATYPE_INT};
+
+    MultiTypeMatrix(const MultiTypeMatrix &) = delete;
+    MultiTypeMatrix(MultiTypeMatrix &&) = delete;
 
     MultiTypeMatrix();
     MultiTypeMatrix(MultiTypeMatrix &src, const unsigned long a1, const unsigned long a2);

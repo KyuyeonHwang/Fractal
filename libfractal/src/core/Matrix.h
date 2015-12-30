@@ -37,6 +37,9 @@ template<class T>
 class Matrix
 {
 public:
+    Matrix(const Matrix<T> &) = delete;
+    Matrix(Matrix<T> &&) = delete;
+
     Matrix(const unsigned long nRows = 0, const unsigned long nCols = 1);
 
     Matrix(Matrix<T> &A, const unsigned long c1, const unsigned long c2);
@@ -84,8 +87,6 @@ public:
 
 
 protected:
-    Matrix(const Matrix<T> &);
-
     void Malloc();
     void Clear();
 

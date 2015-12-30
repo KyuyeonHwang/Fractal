@@ -20,6 +20,7 @@
 
 
 #include <string>
+#include <memory>
 
 #include "Engine.h"
 #include "Matrix.h"
@@ -47,7 +48,7 @@ public:
         srcRangeTo((long) -1),
         dstRangeFrom((long) -1),
         dstRangeTo((long) -1),
-        initWeightParam(initWeightParam.Clone()) {}
+        initWeightParam(std::move(initWeightParam.Clone())) {}
 
     ConnParam(const unsigned long delayAmount,
             const InitWeightParam &initWeightParam = InitWeightParam())
@@ -57,7 +58,7 @@ public:
         srcRangeTo((long) -1),
         dstRangeFrom((long) -1),
         dstRangeTo((long) -1),
-        initWeightParam(initWeightParam.Clone()) {}
+        initWeightParam(std::move(initWeightParam.Clone())) {}
 
     ConnParam(const InitWeightParam &initWeightParam)
         : connType(CONN_FULL),
@@ -66,7 +67,7 @@ public:
         srcRangeTo((long) -1),
         dstRangeFrom((long) -1),
         dstRangeTo((long) -1),
-        initWeightParam(initWeightParam.Clone()) {}
+        initWeightParam(std::move(initWeightParam.Clone())) {}
 
     ConnParam(const ConnType connType,
             const InitWeightParam &initWeightParam)
@@ -76,12 +77,24 @@ public:
         srcRangeTo((long) -1),
         dstRangeFrom((long) -1),
         dstRangeTo((long) -1),
-        initWeightParam(initWeightParam.Clone()) {}
+        initWeightParam(std::move(initWeightParam.Clone())) {}
 
-    virtual ~ConnParam() { delete initWeightParam; }
+    ConnParam& operator=(const ConnParam& obj)
+    {
+        connType = obj.connType;
+        delayAmount = obj.delayAmount;
+        srcRangeFrom = obj.srcRangeFrom;
+        srcRangeTo = obj.srcRangeTo;
+        dstRangeFrom = obj.dstRangeFrom;
+        dstRangeTo = obj.dstRangeTo;
 
-    void SetInitWeightParam(const InitWeightParam &newParam) { delete initWeightParam; initWeightParam = newParam.Clone(); }
-    const InitWeightParam &GetInitWeightParam() const { return *initWeightParam; }
+        initWeightParam = std::move(obj.initWeightParam->Clone());
+
+        return *this;
+    }
+
+    void SetInitWeightParam(const InitWeightParam &newParam) { initWeightParam = std::move(newParam.Clone()); }
+    const InitWeightParam &GetInitWeightParam() const { verify(initWeightParam); return *initWeightParam; }
 
     ConnType connType;
 
@@ -92,7 +105,7 @@ public:
     long dstRangeTo;
 
 protected:
-    InitWeightParam *initWeightParam;
+    std::unique_ptr<InitWeightParam> initWeightParam;
 };
 
 

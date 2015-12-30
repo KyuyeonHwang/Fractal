@@ -18,6 +18,8 @@
 #ifndef FRACTAL_INITWEIGHTPARAM_H_
 #define FRACTAL_INITWEIGHTPARAM_H_
 
+#include <memory>
+
 #include "FractalCommon.h"
 
 namespace fractal
@@ -32,7 +34,7 @@ public:
 
     const bool IsValid() const { return isValid; }
 
-    virtual InitWeightParam *Clone() const { return new InitWeightParam(*this); }
+    virtual std::unique_ptr<InitWeightParam> Clone() const { return std::unique_ptr<InitWeightParam>(new InitWeightParam(*this)); }
 
     bool isValid;
     FLOAT addToDiag;
@@ -46,7 +48,7 @@ public:
     InitWeightParamGaussian(FLOAT stdev) : InitWeightParam(), mean((FLOAT) 0), stdev(stdev) { isValid = true; }
     InitWeightParamGaussian(FLOAT mean, FLOAT stdev) : InitWeightParam(), mean(mean), stdev(stdev) { isValid = true; }
 
-    virtual InitWeightParamGaussian *Clone() const { return new InitWeightParamGaussian(*this); }
+    virtual std::unique_ptr<InitWeightParam> Clone() const { return std::unique_ptr<InitWeightParam>(new InitWeightParamGaussian(*this)); }
 
     FLOAT mean;
     FLOAT stdev;
@@ -60,7 +62,7 @@ public:
     InitWeightParamUniform(FLOAT b) : InitWeightParam(), a(-b), b(b) { isValid = true; }
     InitWeightParamUniform(FLOAT a, FLOAT b) : InitWeightParam(), a(a), b(b) { isValid = true; }
 
-    virtual InitWeightParamUniform *Clone() const { return new InitWeightParamUniform(*this); }
+    virtual std::unique_ptr<InitWeightParam> Clone() const { return std::unique_ptr<InitWeightParam>(new InitWeightParamUniform(*this)); }
 
     FLOAT a;
     FLOAT b;

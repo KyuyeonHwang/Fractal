@@ -547,7 +547,7 @@ void Engine::MatAdd(Matrix<FLOAT> &A, Matrix<FLOAT> &B, Matrix<FLOAT> &C, PStrea
     cudaKernels::MatAdd<FLOAT>(ptrA, A.GetLeadingDim(),
             ptrB, B.GetLeadingDim(),
             ptrC, C.GetLeadingDim(),
-            A.GetNumRows(), B.GetNumCols(),
+            A.GetNumRows(), A.GetNumCols(),
             stream.cudaStream);
 #else
     verify(false); /* CPU computation is not supported */
@@ -578,7 +578,7 @@ void Engine::MatSub(Matrix<FLOAT> &A, Matrix<FLOAT> &B, Matrix<FLOAT> &C, PStrea
     cudaKernels::MatSub<FLOAT>(ptrA, A.GetLeadingDim(),
             ptrB, B.GetLeadingDim(),
             ptrC, C.GetLeadingDim(),
-            A.GetNumRows(), B.GetNumCols(),
+            A.GetNumRows(), A.GetNumCols(),
             stream.cudaStream);
 #else
     verify(false); /* CPU computation is not supported */
@@ -830,6 +830,34 @@ void Engine::MatTranspose(Matrix<FLOAT> &A, Matrix<FLOAT> &B, PStream &stream)
 #else
     verify(false); /* CPU computation is not supported */
 #endif /* FRACTAL_USE_CUDA */
+
+    B.FinishWrite(stream);
+}
+
+
+void Engine::MatShuffle(Matrix<FLOAT> &A, Matrix<FLOAT> &B, Matrix<INT> &srcIdx, PStream &stream)
+{
+    verify(A.GetEngine() == this);
+    verify(B.GetEngine() == this);
+    verify(A.GetNumRows() == B.GetNumRows());
+    verify(A.GetNumCols() == B.GetNumCols());
+    verify(A.GetNumCols() == srcIdx.GetNumRows());
+
+    FLOAT *ptrA, *ptrB;
+    INT *ptrSrcIdx;
+
+    ptrA = A.GetPtrForReadWrite(stream);
+    ptrB = B.GetPtrForWrite(stream);
+    ptrSrcIdx = srcIdx.GetPtrForReadWrite(stream);
+
+    /* Not thorough check */
+    verify(ptrA != ptrB);
+
+    SetComputeLoc(stream.loc);
+    cudaKernels::MatShuffle<FLOAT, INT>(ptrA, A.GetLeadingDim(),
+            ptrB, B.GetLeadingDim(), ptrSrcIdx,
+            A.GetNumRows(), A.GetNumCols(),
+            stream.cudaStream);
 
     B.FinishWrite(stream);
 }

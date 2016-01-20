@@ -70,6 +70,12 @@ namespace cudaKernels
     template<class T>
     void MatMakeTri(T *_x, const bool upper, const unsigned long nRows, cudaStream_t stream);
 
+    template<class T, class I>
+    void MatShuffle(const T *_x, const unsigned long ldx,
+            T *_y, const unsigned long ldy, const I *_srcIdx,
+            const unsigned long nRows, const unsigned long nCols,
+            const cudaStream_t stream);
+
     template<class T>
     void FuncSigmoid(const T *_x, const unsigned long ldx,
             T *_y, const unsigned long ldy,

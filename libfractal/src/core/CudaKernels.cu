@@ -66,6 +66,11 @@ static __global__ void MatAddToDiagKernel(T *x, const T val,
 template<class T>
 static __global__ void MatMakeTriKernel(T *x, const bool upper, const int nRows);
 
+template<class T, class I>
+static __global__ void MatShuffleKernel(const T *x, const int ldx,
+        const T *y, const int ldy, I *srcIdx,
+        const int nRows, const int nCols);
+
 template<class T>
 static __global__ void FuncSigmoidKernel(const T *x, const int ldx,
         T *y, const int ldy, const int nRows, const int nCols);
@@ -292,6 +297,25 @@ static __global__ void MatMakeTriKernel(T *x, const bool upper, const int nRows)
     {
         x[idx] *= (T) (iCol <= iRow);
     }
+}
+
+
+template<class T, class I>
+static __global__ void MatShuffleKernel(const T *x, const int ldx,
+        T *y, const int ldy, const I *srcIdx,
+        const int nRows, const int nCols)
+{
+    int thdIdx = blockIdx.x * blockDim.x + threadIdx.x;
+    int dstCol = thdIdx / nRows;
+    int srcCol = srcIdx[dstCol];
+    int row = thdIdx - dstCol * nRows;
+    int xIdx = srcCol * ldx + row;
+    int yIdx = dstCol * ldy + row;
+
+    if(srcCol < 0) return;
+    if(thdIdx >= nRows * nCols) return;
+
+    y[yIdx] = x[xIdx];
 }
 
 
@@ -817,6 +841,19 @@ void MatMakeTri(T *_x, const bool upper, const unsigned long nRows, cudaStream_t
 }
 
 
+template<class T, class I>
+void MatShuffle(const T *_x, const unsigned long ldx,
+        T *_y, const unsigned long ldy, const I *_srcIdx,
+        const unsigned long nRows, const unsigned long nCols,
+        const cudaStream_t stream)
+{
+    dim3 dimGrid((nRows * nCols + THREAD_PER_BLOCK - 1) / THREAD_PER_BLOCK);
+    dim3 dimBlock(THREAD_PER_BLOCK);
+
+    MatShuffleKernel<T><<<dimGrid, dimBlock, 0, stream>>>(_x, ldx, _y, ldy, _srcIdx, nRows, nCols);
+}
+
+
 template<class T>
 void FuncSigmoid(const T *_x, const unsigned long ldx,
         T *_y, const unsigned long ldy,
@@ -1070,6 +1107,31 @@ template void MatMakeTri<float>(float *_x, const bool upper,
         const unsigned long nRows, cudaStream_t stream);
 template void MatMakeTri<double>(double *_x, const bool upper,
         const unsigned long nRows, cudaStream_t stream);
+
+template void MatShuffle<float, int>(const float *_x, const unsigned long ldx,
+        float *_y, const unsigned long ldy, const int *_srcIdx,
+        const unsigned long nRows, const unsigned long nCols,
+        const cudaStream_t stream);
+template void MatShuffle<float, long>(const float *_x, const unsigned long ldx,
+        float *_y, const unsigned long ldy, const long *_srcIdx,
+        const unsigned long nRows, const unsigned long nCols,
+        const cudaStream_t stream);
+template void MatShuffle<float, long long>(const float *_x, const unsigned long ldx,
+        float *_y, const unsigned long ldy, const long long *_srcIdx,
+        const unsigned long nRows, const unsigned long nCols,
+        const cudaStream_t stream);
+template void MatShuffle<double, int>(const double *_x, const unsigned long ldx,
+        double *_y, const unsigned long ldy, const int *_srcIdx,
+        const unsigned long nRows, const unsigned long nCols,
+        const cudaStream_t stream);
+template void MatShuffle<double, long>(const double *_x, const unsigned long ldx,
+        double *_y, const unsigned long ldy, const long *_srcIdx,
+        const unsigned long nRows, const unsigned long nCols,
+        const cudaStream_t stream);
+template void MatShuffle<double, long long>(const double *_x, const unsigned long ldx,
+        double *_y, const unsigned long ldy, const long long *_srcIdx,
+        const unsigned long nRows, const unsigned long nCols,
+        const cudaStream_t stream);
 
 template void FuncSigmoid<float>(const float *_x, const unsigned long ldx,
         float *_y, const unsigned long ldy,

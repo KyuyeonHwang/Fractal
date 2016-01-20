@@ -131,6 +131,9 @@ public:
     /* B = tr(A) */
     void MatTranspose(Matrix<FLOAT> &A, Matrix<FLOAT> &B, PStream &stream);
 
+    /* B(:, i) = A(:, srcIdx(i)) */
+    void MatShuffle(Matrix<FLOAT> &A, Matrix<FLOAT> &B, Matrix<INT> &srcIdx, PStream &stream);
+
     /* Y = f(X) */
     void FuncSigmoid(Matrix<FLOAT> &X, Matrix<FLOAT> &Y, PStream &stream);
     void FuncTanh(Matrix<FLOAT> &X, Matrix<FLOAT> &Y, PStream &stream);

@@ -66,11 +66,21 @@ void Rnn::SetEngine(Engine *engine)
 
     if(engine != NULL)
     {
-        verify(engine->GetNumComputeLocs() > 0);
-        computeLoc.resize(1);
-        computeLoc[0] = engine->GetComputeLoc(0);
+        std::vector<unsigned long> newComputeLoc;
 
-        CreateDefaultPStream(computeLoc[0]);
+        verify(engine->GetNumComputeLocs() > 0);
+
+        //computeLoc.resize(1);
+        //computeLoc[0] = engine->GetComputeLoc(0);
+        //CreateDefaultPStream(computeLoc[0]);
+
+        newComputeLoc.resize(engine->GetNumComputeLocs());
+        for(unsigned long i = 0; i < engine->GetNumComputeLocs(); i++)
+        {
+            newComputeLoc[i] = engine->GetComputeLoc(i);
+        }
+
+        SetComputeLocs(newComputeLoc);
     }
     else
     {
@@ -1273,10 +1283,15 @@ void Rnn::CreatePStreams()
 
         if(loopDetected == true)
         {
-            if(loopIdx < nLoop - 1 && loopIdx * MAX_NUM_PSTREAM_PER_LOC / nLoop != (loopIdx + 1) * MAX_NUM_PSTREAM_PER_LOC / nLoop)
+            long nComputeLoc = computeLoc.size();
+            long idxCurStream = loopIdx * nComputeLoc * MAX_NUM_PSTREAM_PER_LOC / nLoop;
+            long idxNextStream = (loopIdx + 1) * nComputeLoc * MAX_NUM_PSTREAM_PER_LOC / nLoop;
+            long idxNextLoc = idxNextStream / MAX_NUM_PSTREAM_PER_LOC;
+
+            if(loopIdx < nLoop - 1 && idxCurStream != idxNextStream)
             {
                 pStream = new PStream();
-                engine->StreamCreate(*pStream, computeLoc[0]);
+                engine->StreamCreate(*pStream, computeLoc[idxNextLoc]);
                 pStreamList.push_back(pStream);
             }
             loopIdx++;

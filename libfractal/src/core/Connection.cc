@@ -328,7 +328,7 @@ void Connection::Forward(const unsigned long idxFrom, const unsigned long idxTo)
 
     if(IsDelayed() == true)
     {
-        delay = IsDelayed() == true ? param.delayAmount : 0;
+        delay = param.delayAmount;
         verify(delay < nUnroll);
 
         actFrom = (idxFrom + nUnroll - delay) % nUnroll;
@@ -344,10 +344,21 @@ void Connection::Forward(const unsigned long idxFrom, const unsigned long idxTo)
     }
     else
     {
-        Matrix<FLOAT> srcLayerActSub(srcLayer->act, param.srcRangeFrom, param.srcRangeTo,
-                0, srcLayer->act.GetNumCols() - 1);
+        if(stream->loc != srcLayer->stream->loc)
+        {
+            Matrix<FLOAT> srcLayerActSub(srcLayer->act, param.srcRangeFrom, param.srcRangeTo,
+                    idxFrom * nStream, idxTo * nStream + nStream - 1);
+            Matrix<FLOAT> srcActSub(srcAct, idxFrom * nStream, idxTo * nStream + nStream - 1);
 
-        srcAct.Link(srcLayerActSub);
+            engine->MatCopy(srcLayerActSub, srcActSub, *stream);
+        }
+        else
+        {
+            Matrix<FLOAT> srcLayerActSub(srcLayer->act, param.srcRangeFrom, param.srcRangeTo,
+                    0, srcLayer->act.GetNumCols() - 1);
+
+            srcAct.Link(srcLayerActSub);
+        }
     }
 
     switch(param.connType)

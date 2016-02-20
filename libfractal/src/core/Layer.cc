@@ -662,7 +662,15 @@ void Layer::UpdateDstErr(const unsigned long idxFrom, const unsigned long idxTo)
         }
         else
         { 
-            dstErr.Link(firstConn->srcErr);
+            if(firstConn->stream->loc != stream->loc)
+            {
+                Matrix<FLOAT> firstDstSub(firstConn->srcErr, idxFrom * nStream, idxTo * nStream + nStream - 1);
+                engine->MatCopy(firstDstSub, dstErrSub, *stream);
+            }
+            else
+            {
+                dstErr.Link(firstConn->srcErr);
+            }
         }
     }
     else if(errInject == true)

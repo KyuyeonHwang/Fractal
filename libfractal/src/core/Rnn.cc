@@ -666,6 +666,8 @@ void Rnn::UpdateWeights(const unsigned long idxFrom, const unsigned long idxTo,
     {
         (*iter)->UpdateWeights(idxFrom, idxTo, rate, momentum, adadelta, rmsprop);
     }
+
+    Synchronize();
 }
 
 

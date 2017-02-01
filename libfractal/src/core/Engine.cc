@@ -963,6 +963,32 @@ void Engine::FuncRectLinear(Matrix<FLOAT> &X, Matrix<FLOAT> &Y, PStream &stream)
 }
 
 
+void Engine::FuncSignum(Matrix<FLOAT> &X, Matrix<FLOAT> &Y, PStream &stream)
+{
+    verify(X.GetEngine() == this);
+    verify(Y.GetEngine() == this);
+    verify(X.GetNumRows() == Y.GetNumRows());
+    verify(X.GetNumCols() == Y.GetNumCols());
+
+    FLOAT *ptrX, *ptrY;
+
+    ptrX = X.GetPtrForReadWrite(stream);
+    ptrY = Y.GetPtrForWrite(stream);
+
+#ifdef FRACTAL_USE_CUDA
+    SetComputeLoc(stream.loc);
+    cudaKernels::FuncSignum<FLOAT>(ptrX, X.GetLeadingDim(),
+            ptrY, Y.GetLeadingDim(),
+            Y.GetNumRows(), Y.GetNumCols(),
+            stream.cudaStream);
+#else
+    verify(false); /* CPU computation is not supported */
+#endif /* FRACTAL_USE_CUDA */
+
+    Y.FinishWrite(stream);
+}
+
+
 void Engine::FuncSoftmax(Matrix<FLOAT> &X, Matrix<FLOAT> &Y, PStream &stream)
 {
     verify(X.GetEngine() == this);

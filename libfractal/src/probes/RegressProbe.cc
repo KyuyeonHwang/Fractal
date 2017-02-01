@@ -17,6 +17,8 @@
 
 #include "RegressProbe.h"
 
+#include <cmath>
+
 #include "../core/Layer.h"
 
 
@@ -24,8 +26,13 @@ namespace fractal
 {
 
 
-RegressProbe::RegressProbe() : TrainableProbe(false)
+RegressProbe::RegressProbe(const LossType lossType, const FLOAT delta)
+    : TrainableProbe(false),
+    lossType(lossType),
+    delta(delta)
 {
+    verify(!(lossType == LOSS_HUBER && delta <= (FLOAT) 0));
+
     ResetStatistics();
 }
 
@@ -86,18 +93,38 @@ void RegressProbe::ComputeErr(const unsigned long idxFrom, const unsigned long i
     /* err = target - act */
     engine->MatCopy(targetSub, errSub, stream);
     engine->MatAdd(actSub, errSub, (FLOAT) -1, stream);
+
+    switch(lossType)
+    {
+        case LOSS_L2:
+            /* as is */
+            break;
+        
+        case LOSS_L1:
+            engine->FuncSignum(errSub, errSub, stream);
+            break;
+        
+        case LOSS_HUBER:
+            engine->FuncBoundRange(errSub, errSub, -delta, delta, stream);
+            break;
+        
+        default:
+            verify(false);
+    }
 }
 
 
 void RegressProbe::EvaluateOnHost(MultiTypeMatrix &target, Matrix<FLOAT> &output)
 {
-    double sePartialSum;
+    double sePartialSum, adPartialSum, hlPartialSum;
     unsigned long n, dim, nFrame;
 
     dim = output.GetNumRows();
     nFrame = output.GetNumCols();
 
     sePartialSum = 0.0;
+    adPartialSum = 0.0;
+    hlPartialSum = 0.0;
 
     nSample += nFrame;
 
@@ -128,12 +155,16 @@ void RegressProbe::EvaluateOnHost(MultiTypeMatrix &target, Matrix<FLOAT> &output
 
 
                 #ifdef FRACTAL_USE_OMP
-                #pragma omp parallel for reduction(+:sePartialSum)
+                #pragma omp parallel for reduction(+:sePartialSum, adPartialSum, hlPartialSum)
                 #endif
                 for(unsigned long i = 0; i < n; i++)
                 {
-                    FLOAT err = o[i] - t[i];
-                    sePartialSum += err * err;
+                    FLOAT err = std::abs(o[i] - t[i]);
+
+                    sePartialSum += err * err / (FLOAT)2;
+                    adPartialSum += err;
+                    hlPartialSum += err * err / (FLOAT)2 * (FLOAT)(err <= delta)
+                                  + delta * (err - delta / (FLOAT)2) * (FLOAT)(err > delta);
                 }
             }
             break;
@@ -162,7 +193,7 @@ void RegressProbe::EvaluateOnHost(MultiTypeMatrix &target, Matrix<FLOAT> &output
 
 
                 #ifdef FRACTAL_USE_OMP
-                #pragma omp parallel for reduction(+:sePartialSum)
+                #pragma omp parallel for reduction(+:sePartialSum, adPartialSum, hlPartialSum)
                 #endif
                 for(unsigned long i = 0; i < nFrame; i++)
                 {
@@ -170,8 +201,12 @@ void RegressProbe::EvaluateOnHost(MultiTypeMatrix &target, Matrix<FLOAT> &output
                     {
                         unsigned long idx = i * dim + j;
 
-                        FLOAT err = o[idx] - (FLOAT)((INT) j == t[i]);
-                        sePartialSum += err * err;
+                        FLOAT err = std::abs(o[idx] - (FLOAT)((INT) j == t[i]));
+
+                        sePartialSum += err * err / (FLOAT)2;
+                        adPartialSum += err;
+                        hlPartialSum += err * err / (FLOAT)2 * (FLOAT)(err <= delta)
+                                      + delta * (err - delta / (FLOAT)2) * (FLOAT)(err > delta);
                     }
                 }
             }
@@ -182,6 +217,8 @@ void RegressProbe::EvaluateOnHost(MultiTypeMatrix &target, Matrix<FLOAT> &output
     }
 
     seSum += sePartialSum;
+    adSum += adPartialSum;
+    hlSum += hlPartialSum;
 }
 
 
@@ -189,24 +226,61 @@ void RegressProbe::ResetStatistics()
 {
     nSample = 0;
     seSum = 0.0;
+    adSum = 0.0;
+    hlSum = 0.0;
 }
 
 
 const double RegressProbe::GetLoss()
 {
-    return GetMeanSquaredError();
+    double loss;
+
+    switch(lossType)
+    {
+        case LOSS_L2:
+            loss = GetMeanSquaredError();
+            break;
+        
+        case LOSS_L1:
+            loss = GetMeanAbsoluteDeviation();
+            break;
+        
+        case LOSS_HUBER:
+            loss = GetMeanHuberLoss();
+            break;
+        
+        default:
+            loss = std::nan("");
+            verify(false);
+    }
+
+    return loss;
 }
 
 
 void RegressProbe::PrintStatistics(std::ostream &outStream)
 {
-    outStream << "MSE: " << GetMeanSquaredError();
+    outStream << "MSE: " << GetMeanSquaredError()
+        << "  MAD: " << GetMeanAbsoluteDeviation()
+        << "  MHL(" << delta << "): " << GetMeanHuberLoss();
 }
 
 
 const double RegressProbe::GetMeanSquaredError()
 {
     return seSum / nSample;
+}
+
+
+const double RegressProbe::GetMeanAbsoluteDeviation()
+{
+    return adSum / nSample;
+}
+
+
+const double RegressProbe::GetMeanHuberLoss()
+{
+    return hlSum / nSample;
 }
 
 

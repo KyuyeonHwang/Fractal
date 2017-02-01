@@ -88,6 +88,10 @@ static __global__ void FuncRectLinearKernel(const T *x, const int ldx,
         T *y, const int ldy, const int nRows, const int nCols);
 
 template<class T>
+static __global__ void FuncSignumKernel(const T *x, const int ldx,
+        T *y, const int ldy, const int nRows, const int nCols);
+
+template<class T>
 static __global__ void FuncSoftmaxKernel(const T *x, const int ldx,
         T *y, const int ldy, const int n);
 
@@ -385,6 +389,23 @@ static __global__ void FuncRectLinearKernel(const T *x, const int ldx,
 
     /* Leaky */
     y[yIdx] = max((T)0.01 * x[xIdx], x[xIdx]);
+}
+
+
+template<class T>
+static __global__ void FuncSignumKernel(const T *x, const int ldx,
+        T *y, const int ldy, const int nRows, const int nCols)
+{
+    int thdIdx = blockIdx.x * blockDim.x + threadIdx.x;
+    int col = thdIdx / nRows;
+    int row = thdIdx - col * nRows;
+    int xIdx = col * ldx + row;
+    int yIdx = col * ldy + row;
+
+    if(thdIdx >= nRows * nCols) return;
+
+    T v = x[xIdx];
+    y[yIdx] = (T)(v > (T)0) - (T)(v < (T)0);
 }
 
 
@@ -907,6 +928,19 @@ void FuncRectLinear(const T *_x, const unsigned long ldx,
 
 
 template<class T>
+void FuncSignum(const T *_x, const unsigned long ldx,
+        T *_y, const unsigned long ldy,
+        const unsigned long nRows, const unsigned long nCols,
+        const cudaStream_t stream)
+{
+    dim3 dimGrid((nRows * nCols + THREAD_PER_BLOCK - 1) / THREAD_PER_BLOCK);
+    dim3 dimBlock(THREAD_PER_BLOCK);
+
+    FuncSignumKernel<T><<<dimGrid, dimBlock, 0, stream>>>(_x, ldx, _y, ldy, nRows, nCols);
+}
+
+
+template<class T>
 void FuncSoftmax(const T *_x, const unsigned long ldx,
         T *_y, const unsigned long ldy,
         const unsigned long layerSize, const unsigned long batchSize,
@@ -1165,6 +1199,15 @@ template void FuncRectLinear<float>(const float *_x, const unsigned long ldx,
         const unsigned long nRows, const unsigned long nCols,
         const cudaStream_t stream);
 template void FuncRectLinear<double>(const double *_x, const unsigned long ldx,
+        double *_y, const unsigned long ldy,
+        const unsigned long nRows, const unsigned long nCols,
+        const cudaStream_t stream);
+
+template void FuncSignum<float>(const float *_x, const unsigned long ldx,
+        float *_y, const unsigned long ldy,
+        const unsigned long nRows, const unsigned long nCols,
+        const cudaStream_t stream);
+template void FuncSignum<double>(const double *_x, const unsigned long ldx,
         double *_y, const unsigned long ldy,
         const unsigned long nRows, const unsigned long nCols,
         const cudaStream_t stream);

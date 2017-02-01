@@ -139,6 +139,7 @@ public:
     void FuncTanh(Matrix<FLOAT> &X, Matrix<FLOAT> &Y, PStream &stream);
     void FuncSoftplus(Matrix<FLOAT> &X, Matrix<FLOAT> &Y, PStream &stream);
     void FuncRectLinear(Matrix<FLOAT> &X, Matrix<FLOAT> &Y, PStream &stream);
+    void FuncSignum(Matrix<FLOAT> &X, Matrix<FLOAT> &Y, PStream &stream);
     void FuncSoftmax(Matrix<FLOAT> &X, Matrix<FLOAT> &Y, PStream &stream);
     void FuncCTCDecode(Matrix<FLOAT> &X, Matrix<FLOAT> &Y, Matrix<INT> &prevIdxMax, Matrix<INT> &idxMax, const unsigned long nStream, PStream &stream);
     void FuncBoundRange(Matrix<FLOAT> &X, Matrix<FLOAT> &Y, const FLOAT min, const FLOAT max, PStream &stream);

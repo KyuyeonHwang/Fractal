@@ -29,7 +29,10 @@ namespace fractal
 class RegressProbe : public TrainableProbe
 {
 public:
-    RegressProbe();
+
+    enum LossType {LOSS_L2, LOSS_L1, LOSS_HUBER};
+
+    RegressProbe(const LossType lossType = LOSS_L2, const FLOAT delta = (FLOAT) 1);
 
     void SetTarget(MultiTypeMatrix &mat, const unsigned long idxFrom, const unsigned long idxTo);
     void ComputeErr(const unsigned long idxFrom, const unsigned long idxTo);
@@ -39,6 +42,8 @@ public:
     void PrintStatistics(std::ostream &outStream);
 
     const double GetMeanSquaredError();
+    const double GetMeanAbsoluteDeviation();
+    const double GetMeanHuberLoss();
 
 protected:
     virtual void SetEngine(Engine *engine);
@@ -46,6 +51,11 @@ protected:
     Matrix<FLOAT> target;
     unsigned long nSample;
     double seSum;
+    double adSum;
+    double hlSum;
+
+    const LossType lossType;
+    const FLOAT delta; /* for LOSS_HUBER */
 };
 
 }

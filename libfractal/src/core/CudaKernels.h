@@ -101,6 +101,12 @@ namespace cudaKernels
             const cudaStream_t stream);
 
     template<class T>
+    void FuncSignum(const T *_x, const unsigned long ldx,
+            T *_y, const unsigned long ldy,
+            const unsigned long nRows, const unsigned long nCols,
+            const cudaStream_t stream);
+
+    template<class T>
     void FuncSoftmax(const T *_x, const unsigned long ldx,
             T *_y, const unsigned long ldy,
             const unsigned long layerSize, const unsigned long batchSize,
